@@ -31,7 +31,6 @@
     padding-bottom: 100px;
   }
 
-  /* HEADER */
   .header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
@@ -65,7 +64,6 @@
   .btn-sync:active { opacity: 0.7; }
   .btn-sync.syncing { opacity: 0.6; pointer-events: none; }
 
-  /* TOAST */
   .toast {
     position: fixed;
     bottom: 24px;
@@ -85,6 +83,8 @@
   .toast.show { transform: translateX(-50%) translateY(0); }
   .toast.ok { color: var(--green); border-color: rgba(34,197,94,0.3); }
   .toast.err { color: var(--red); border-color: rgba(239,68,68,0.3); }
+  .toast.info { color: var(--accent); border-color: rgba(240,192,64,0.3); }
+
   .header h1 {
     font-family: 'Syne', sans-serif;
     font-size: 20px;
@@ -112,7 +112,35 @@
     gap: 5px;
   }
 
-  /* RESUMEN FINANCIERO */
+  /* CARGANDO */
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    transition: opacity 0.4s;
+  }
+  .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
   .resumen {
     padding: 16px 16px 0;
     display: grid;
@@ -162,7 +190,6 @@
     margin-top: 4px;
   }
 
-  /* FILTROS */
   .filtros {
     padding: 0 16px 14px;
     display: flex;
@@ -190,7 +217,6 @@
     font-weight: 600;
   }
 
-  /* LISTA ENVÍOS */
   .lista {
     padding: 0 16px;
     display: flex;
@@ -233,20 +259,6 @@
     align-items: center;
     gap: 4px;
   }
-
-  .estado-btn {
-    flex-shrink: 0;
-    border: none;
-    border-radius: 8px;
-    padding: 5px 10px;
-    font-size: 11px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-  }
-  .estado-btn.pendiente { background: var(--surface2); color: var(--muted); }
-  .estado-btn.entregado { background: rgba(34,197,94,0.15); color: var(--green); }
-  .estado-btn.cancelado { background: rgba(239,68,68,0.15); color: var(--red); }
 
   .envio-montos {
     padding: 0 14px 14px;
@@ -312,7 +324,6 @@
   .action-btn:active { background: var(--surface2); }
   .action-btn.del { color: var(--red); }
 
-  /* ESTADO CICLO */
   .estado-ciclo {
     display: flex;
     gap: 6px;
@@ -336,7 +347,6 @@
   .ciclo-btn.active-entregado { background: rgba(34,197,94,0.2); color: var(--green); border-color: var(--green); }
   .ciclo-btn.active-cancelado { background: rgba(239,68,68,0.2); color: var(--red); border-color: var(--red); }
 
-  /* MODAL */
   .modal-overlay {
     display: none;
     position: fixed;
@@ -418,7 +428,6 @@
     cursor: pointer;
   }
 
-  /* EMPTY STATE */
   .empty {
     text-align: center;
     padding: 48px 24px;
@@ -427,18 +436,15 @@
   .empty .icon { font-size: 48px; margin-bottom: 14px; }
   .empty h3 { font-family: 'Syne', sans-serif; font-size: 18px; color: var(--text); margin-bottom: 6px; }
   .empty p { font-size: 14px; line-height: 1.5; }
-
-  .seccion-titulo {
-    padding: 4px 16px 10px;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--muted);
-    font-weight: 600;
-  }
 </style>
 </head>
 <body>
+
+<!-- PANTALLA DE CARGA -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Cargando entregas...</div>
+</div>
 
 <!-- HEADER -->
 <div class="header">
@@ -448,7 +454,7 @@
       <div class="fecha" id="fechaHoy"></div>
     </div>
     <div class="header-btns">
-      <button class="btn-sync" id="btnSync" onclick="sincronizarSheets()">☁️ Sync</button>
+      <button class="btn-sync" id="btnSync" onclick="cargarDesdeSheets()">🔄 Actualizar</button>
       <button class="btn-add-top" onclick="abrirModal()">+ Agregar</button>
     </div>
   </div>
@@ -477,7 +483,7 @@
   <div class="resumen-card rendir">
     <div class="label">A Rendir</div>
     <div class="monto" id="totalRendir">₲ 0</div>
-    <div class="sub">cobrado - comisión</div>
+    <div class="sub">cobrado - flete</div>
   </div>
 </div>
 
@@ -511,7 +517,7 @@
           <input type="number" id="inputMonto" placeholder="0" />
         </div>
         <div class="field">
-          <label>Flete (lo que cobra él)</label>
+          <label>Flete</label>
           <input type="number" id="inputFlete" placeholder="0" />
         </div>
       </div>
@@ -535,6 +541,18 @@
   const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxKjbF4VbdSUgsO4MULNZm2pSh1khlrvZhUKTfKdYwzo6_WxPg_rPbLiNlyD5NLY90C/exec';
   const SHEET_ID   = '1NLC-CqqtRxiC4FhPjgfNVaG3kPQZMAVY1-HTfitgo18';
 
+  let envios = [];
+  let filtroActivo = 'todos';
+  let editandoId = null;
+  let syncTimeout = null; // para auto-sync con debounce
+
+  // Fecha
+  const hoy = new Date();
+  const fechaStr = hoy.toLocaleDateString('es-PY', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  document.getElementById('fechaHoy').textContent = hoy.toLocaleDateString('es-PY', {
+    weekday: 'long', day: 'numeric', month: 'long'
+  });
+
   function mostrarToast(msg, tipo = 'ok', duracion = 3000) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -543,68 +561,66 @@
     setTimeout(() => t.classList.remove('show'), duracion);
   }
 
-  async function sincronizarSheets() {
-    if (envios.length === 0) { mostrarToast('⚠️ No hay envíos para guardar', 'err'); return; }
-    const btn = document.getElementById('btnSync');
-    btn.classList.add('syncing');
-    btn.textContent = '⏳ Guardando...';
-    const fecha = new Date().toLocaleDateString('es-PY', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    try {
-      const res = await fetch(SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'guardar_dia', sheetId: SHEET_ID, fecha, envios }),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        mostrarToast('✅ Guardado en Google Sheets', 'ok');
-      } else {
-        mostrarToast('❌ Error: ' + (data.error || 'desconocido'), 'err', 5000);
-      }
-    } catch (err) {
-      mostrarToast('❌ Sin conexión o error de red', 'err', 5000);
-    }
-    btn.classList.remove('syncing');
-    btn.textContent = '☁️ Sync';
-  }
-
-  let envios = JSON.parse(localStorage.getItem('envios_dia') || '[]');
-  let filtroActivo = 'todos';
-  let editandoId = null;
-
-  // Fecha
-  const hoy = new Date();
-  document.getElementById('fechaHoy').textContent = hoy.toLocaleDateString('es-PY', {
-    weekday: 'long', day: 'numeric', month: 'long'
-  });
-
   function formatGs(n) {
     if (!n && n !== 0) return '₲ 0';
     return '₲ ' + Number(n).toLocaleString('es-PY');
   }
 
-  function guardar() {
-    localStorage.setItem('envios_dia', JSON.stringify(envios));
-    actualizarFiltrosCiudad();
+  // ─── CARGAR DESDE SHEETS ───────────────────────────────────────────────────
+  async function cargarDesdeSheets() {
+    const btn = document.getElementById('btnSync');
+    btn.classList.add('syncing');
+    btn.textContent = '⏳ Cargando...';
+    try {
+      const res = await fetch(`${SCRIPT_URL}?sheetId=${SHEET_ID}`);
+      const data = await res.json();
+      if (data.ok) {
+        envios = data.data || [];
+        renderLista();
+        actualizarResumen();
+        actualizarFiltrosCiudad();
+        mostrarToast('✅ Datos actualizados', 'ok');
+      } else {
+        mostrarToast('❌ Error al cargar: ' + (data.error || 'desconocido'), 'err', 5000);
+      }
+    } catch (err) {
+      mostrarToast('❌ Sin conexión', 'err', 4000);
+    }
+    btn.classList.remove('syncing');
+    btn.textContent = '🔄 Actualizar';
   }
 
+  // ─── GUARDAR EN SHEETS (auto, con debounce 1.5s) ──────────────────────────
+  function guardarEnSheets() {
+    clearTimeout(syncTimeout);
+    syncTimeout = setTimeout(async () => {
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'guardar_dia', sheetId: SHEET_ID, fecha: fechaStr, envios }),
+        });
+      } catch (err) {
+        // silencioso en auto-save
+      }
+    }, 1500);
+  }
+
+  // ─── MODAL ─────────────────────────────────────────────────────────────────
   function abrirModal(id = null) {
     editandoId = id;
     if (id !== null) {
       const e = envios.find(x => x.id === id);
       document.getElementById('modalTitulo').textContent = '✏️ Editar Envío';
-      document.getElementById('inputNombre').value = e.nombre;
-      document.getElementById('inputCiudad').value = e.ciudad;
-      document.getElementById('inputMonto').value = e.montoBase;
-      document.getElementById('inputFlete').value = e.flete || 0;
+      document.getElementById('inputNombre').value   = e.nombre;
+      document.getElementById('inputCiudad').value   = e.ciudad;
+      document.getElementById('inputMonto').value    = e.montoBase;
+      document.getElementById('inputFlete').value    = e.flete || 0;
       document.getElementById('inputTelefono').value = e.telefono || '';
-      document.getElementById('inputNota').value = e.nota || '';
+      document.getElementById('inputNota').value     = e.nota || '';
     } else {
       document.getElementById('modalTitulo').textContent = '+ Nuevo Envío';
-      document.getElementById('inputNombre').value = '';
-      document.getElementById('inputCiudad').value = '';
-      document.getElementById('inputMonto').value = '';
-      document.getElementById('inputTelefono').value = '';
-      document.getElementById('inputNota').value = '';
+      ['inputNombre','inputCiudad','inputMonto','inputFlete','inputTelefono','inputNota']
+        .forEach(id => document.getElementById(id).value = '');
     }
     document.getElementById('modalOverlay').classList.add('open');
     setTimeout(() => document.getElementById('inputNombre').focus(), 100);
@@ -619,78 +635,63 @@
     if (e.target === document.getElementById('modalOverlay')) cerrarModal();
   }
 
+  // ─── GUARDAR ENVÍO ─────────────────────────────────────────────────────────
   function guardarEnvio() {
-    const nombre = document.getElementById('inputNombre').value.trim();
-    const ciudad = document.getElementById('inputCiudad').value.trim();
-    const monto = parseFloat(document.getElementById('inputMonto').value) || 0;
-    const flete = parseFloat(document.getElementById('inputFlete').value) || 0;
+    const nombre   = document.getElementById('inputNombre').value.trim();
+    const ciudad   = document.getElementById('inputCiudad').value.trim();
+    const monto    = parseFloat(document.getElementById('inputMonto').value) || 0;
+    const flete    = parseFloat(document.getElementById('inputFlete').value) || 0;
     const telefono = document.getElementById('inputTelefono').value.trim();
-    const nota = document.getElementById('inputNota').value.trim();
+    const nota     = document.getElementById('inputNota').value.trim();
 
-    if (!nombre || !ciudad) {
-      alert('Por favor ingresá el nombre y la ciudad.');
-      return;
-    }
+    if (!nombre || !ciudad) { alert('Por favor ingresá el nombre y la ciudad.'); return; }
 
     if (editandoId !== null) {
       const idx = envios.findIndex(x => x.id === editandoId);
-      envios[idx].nombre = nombre;
-      envios[idx].ciudad = ciudad;
-      envios[idx].montoBase = monto;
-      envios[idx].flete = flete;
-      envios[idx].telefono = telefono;
-      envios[idx].nota = nota;
+      Object.assign(envios[idx], { nombre, ciudad, montoBase: monto, flete, telefono, nota });
     } else {
-      envios.push({
-        id: Date.now(),
-        nombre, ciudad, telefono, nota,
-        montoBase: monto,
-        flete: flete,
-        extras: 0,
-        estado: 'pendiente'
-      });
+      envios.push({ id: Date.now(), nombre, ciudad, telefono, nota, montoBase: monto, flete, extras: 0, estado: 'pendiente' });
     }
 
-    guardar();
     cerrarModal();
     renderLista();
     actualizarResumen();
+    actualizarFiltrosCiudad();
+    guardarEnSheets();
+    mostrarToast('💾 Guardando...', 'info', 2000);
   }
 
-  function cambiarEstado(id) {
-    const e = envios.find(x => x.id === id);
-    const ciclo = { pendiente: 'entregado', entregado: 'cancelado', cancelado: 'pendiente' };
-    e.estado = ciclo[e.estado];
-    guardar();
-    renderLista();
-    actualizarResumen();
-  }
-
+  // ─── ESTADO ────────────────────────────────────────────────────────────────
   function setEstado(id, estado) {
     const e = envios.find(x => x.id === id);
     e.estado = estado;
-    guardar();
     renderLista();
     actualizarResumen();
+    guardarEnSheets();
   }
 
+  // ─── MONTOS ────────────────────────────────────────────────────────────────
   function actualizarMonto(id, campo, valor) {
     const e = envios.find(x => x.id === id);
     e[campo] = parseFloat(valor) || 0;
     const totalEl = document.getElementById('total-' + id);
     if (totalEl) totalEl.textContent = formatGs(e.montoBase + (e.extras || 0));
-    guardar();
     actualizarResumen();
+    guardarEnSheets();
   }
 
+  // ─── ELIMINAR ──────────────────────────────────────────────────────────────
   function eliminarEnvio(id) {
     if (!confirm('¿Eliminar este envío?')) return;
     envios = envios.filter(x => x.id !== id);
-    guardar();
     renderLista();
     actualizarResumen();
+    actualizarFiltrosCiudad();
+    guardarEnSheets();
+    mostrarToast('🗑 Envío eliminado', 'ok');
   }
 
+  // ─── FILTROS ───────────────────────────────────────────────────────────────
   function filtrar(f, btn) {
     filtroActivo = f;
     document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
@@ -698,145 +699,50 @@
     renderLista();
   }
 
+  // ─── RESUMEN ───────────────────────────────────────────────────────────────
   function actualizarResumen() {
     const entregados = envios.filter(e => e.estado === 'entregado');
-    const pendientes  = envios.filter(e => e.estado === 'pendiente');
-    const cancelados  = envios.filter(e => e.estado === 'cancelado');
-
-    // Solo los entregados generan cobro y flete real
-    const totalCobrado  = entregados.reduce((s, e) => s + e.montoBase + (e.extras || 0), 0);
-    const fleteTotal    = entregados.reduce((s, e) => s + (e.flete  || 0), 0);
-    const aRendir       = totalCobrado - fleteTotal;
-
-    // Total general (referencia: todos los envíos cargados)
-    const totalGeneral  = envios.reduce((s, e) => s + e.montoBase + (e.extras || 0), 0);
+    const pendientes = envios.filter(e => e.estado === 'pendiente');
+    const cancelados = envios.filter(e => e.estado === 'cancelado');
+    const totalCobrado = entregados.reduce((s, e) => s + e.montoBase + (e.extras || 0), 0);
+    const fleteTotal   = entregados.reduce((s, e) => s + (e.flete  || 0), 0);
+    const aRendir      = totalCobrado - fleteTotal;
+    const totalGeneral = envios.reduce((s, e) => s + e.montoBase + (e.extras || 0), 0);
 
     document.getElementById('totalVendido').textContent  = formatGs(totalGeneral);
     document.getElementById('totalEnvios').textContent   =
       envios.length + ' envío' + (envios.length !== 1 ? 's' : '') +
-      (pendientes.length  ? ' · ⏳ ' + pendientes.length  : '') +
-      (cancelados.length  ? ' · ❌ ' + cancelados.length  : '');
-
+      (pendientes.length ? ' · ⏳ ' + pendientes.length : '') +
+      (cancelados.length ? ' · ❌ ' + cancelados.length : '');
     document.getElementById('totalCobrado').textContent  = formatGs(totalCobrado);
     document.getElementById('cantEntregados').textContent = entregados.length + ' entregado' + (entregados.length !== 1 ? 's' : '');
-
     document.getElementById('totalFlete').textContent    = formatGs(fleteTotal);
     document.getElementById('cantFlete').textContent     = 'de ' + entregados.length + ' entregado' + (entregados.length !== 1 ? 's' : '');
-
     document.getElementById('totalRendir').textContent   = formatGs(aRendir);
   }
 
+  // ─── RENDER ────────────────────────────────────────────────────────────────
   function renderLista() {
     const container = document.getElementById('listaEnvios');
-    let lista = filtroActivo === 'todos' ? envios : envios.filter(e => e.estado === filtroActivo);
+    let lista = filtroActivo === 'todos' ? envios :
+                filtroActivo.startsWith('ciudad:') ? envios.filter(e => e.ciudad === filtroActivo.split(':')[1]) :
+                envios.filter(e => e.estado === filtroActivo);
 
     if (lista.length === 0) {
+      const iconos = { todos: '📦', entregado: '✅', cancelado: '❌', pendiente: '⏳' };
+      const icono  = iconos[filtroActivo] || '📍';
       container.innerHTML = `
         <div class="empty">
-          <div class="icon">${filtroActivo === 'todos' ? '📦' : filtroActivo === 'entregado' ? '✅' : filtroActivo === 'cancelado' ? '❌' : '⏳'}</div>
+          <div class="icon">${icono}</div>
           <h3>${filtroActivo === 'todos' ? 'Sin envíos hoy' : 'Nada aquí'}</h3>
           <p>${filtroActivo === 'todos' ? 'Tocá + Agregar para cargar los envíos del día' : 'No hay envíos con este estado'}</p>
         </div>`;
       return;
     }
 
-    // Ordenar: pendientes primero, luego entregados, luego cancelados
     const orden = { pendiente: 0, entregado: 1, cancelado: 2 };
     lista = [...lista].sort((a, b) => orden[a.estado] - orden[b.estado]);
 
-    container.innerHTML = lista.map(e => {
-      const total = e.montoBase + (e.extras || 0);
-      const estadoLabel = { pendiente: '⏳ Pendiente', entregado: '✅ Entregado', cancelado: '❌ Cancelado' };
-      return `
-      <div class="envio-card ${e.estado}" id="card-${e.id}">
-        <div class="envio-header">
-          <div class="envio-info">
-            <div class="envio-nombre">${e.nombre}</div>
-            <div class="envio-ciudad">📍 ${e.ciudad}${e.nota ? `<span style="color:var(--accent);font-size:10px"> · ${e.nota}</span>` : ''}</div>
-            ${e.telefono ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">📞 ${e.telefono}</div>` : ''}
-          </div>
-        </div>
-        
-        <div class="estado-ciclo">
-          <button class="ciclo-btn ${e.estado === 'pendiente' ? 'active-pendiente' : ''}" onclick="setEstado(${e.id}, 'pendiente')">⏳ Pendiente</button>
-          <button class="ciclo-btn ${e.estado === 'entregado' ? 'active-entregado' : ''}" onclick="setEstado(${e.id}, 'entregado')">✅ Entregado</button>
-          <button class="ciclo-btn ${e.estado === 'cancelado' ? 'active-cancelado' : ''}" onclick="setEstado(${e.id}, 'cancelado')">❌ Cancelado</button>
-        </div>
-
-        <div class="envio-montos">
-          <div class="monto-field">
-            <label>Pedido</label>
-            <input type="number" value="${e.montoBase}" 
-              onchange="actualizarMonto(${e.id}, 'montoBase', this.value)"
-              oninput="actualizarMonto(${e.id}, 'montoBase', this.value)" />
-          </div>
-          <div class="monto-field">
-            <label>+ Extras</label>
-            <input type="number" value="${e.extras || 0}" 
-              onchange="actualizarMonto(${e.id}, 'extras', this.value)"
-              oninput="actualizarMonto(${e.id}, 'extras', this.value)" 
-              placeholder="0" />
-          </div>
-          <div class="monto-field">
-            <label style="color:var(--accent2)">- Flete</label>
-            <input type="number" value="${e.flete || 0}"
-              style="border-color: rgba(59,130,246,0.3); color: var(--accent2);"
-              onchange="actualizarMonto(${e.id}, 'flete', this.value)"
-              oninput="actualizarMonto(${e.id}, 'flete', this.value)"
-              placeholder="0" />
-          </div>
-          <div class="monto-field">
-            <label>Total</label>
-            <div class="total-envio" id="total-${e.id}">${formatGs(total)}</div>
-          </div>
-        </div>
-
-        <div class="envio-actions">
-          <button class="action-btn" onclick="abrirModal(${e.id})">✏️ Editar</button>
-          <button class="action-btn del" onclick="eliminarEnvio(${e.id})">🗑 Eliminar</button>
-        </div>
-      </div>`;
-    }).join('');
-  }
-
-  // Actualizar total en tiempo real también cuando se escribe en extras/base
-  // (ya manejado en actualizarMonto)
-
-  // Init
-  renderLista();
-  actualizarResumen();
-
-  // Agregar filtros de ciudad dinámicamente
-  function actualizarFiltrosCiudad() {
-    const ciudades = [...new Set(envios.map(e => e.ciudad).filter(Boolean))];
-    const cont = document.getElementById('filtrosContainer');
-    // Remover filtros de ciudad anteriores
-    cont.querySelectorAll('.filtro-ciudad').forEach(b => b.remove());
-    ciudades.forEach(c => {
-      const btn = document.createElement('button');
-      btn.className = 'filtro-btn filtro-ciudad';
-      btn.textContent = '📍 ' + c;
-      btn.onclick = function() {
-        filtroActivo = 'ciudad:' + c;
-        document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        // Filtrar por ciudad
-        const container = document.getElementById('listaEnvios');
-        const lista = envios.filter(e => e.ciudad === c);
-        if (lista.length === 0) {
-          container.innerHTML = `<div class="empty"><div class="icon">📍</div><h3>Sin envíos en ${c}</h3></div>`;
-        } else {
-          renderListaCustom(lista);
-        }
-      };
-      cont.appendChild(btn);
-    });
-  }
-
-  function renderListaCustom(lista) {
-    const container = document.getElementById('listaEnvios');
-    const orden = { pendiente: 0, entregado: 1, cancelado: 2 };
-    lista = [...lista].sort((a, b) => orden[a.estado] - orden[b.estado]);
     container.innerHTML = lista.map(e => {
       const total = e.montoBase + (e.extras || 0);
       return `
@@ -856,20 +762,20 @@
         <div class="envio-montos">
           <div class="monto-field">
             <label>Pedido</label>
-            <input type="number" value="${e.montoBase}" 
+            <input type="number" value="${e.montoBase}"
               onchange="actualizarMonto(${e.id}, 'montoBase', this.value)"
               oninput="actualizarMonto(${e.id}, 'montoBase', this.value)" />
           </div>
           <div class="monto-field">
             <label>+ Extras</label>
-            <input type="number" value="${e.extras || 0}" 
+            <input type="number" value="${e.extras || 0}"
               onchange="actualizarMonto(${e.id}, 'extras', this.value)"
               oninput="actualizarMonto(${e.id}, 'extras', this.value)" placeholder="0" />
           </div>
           <div class="monto-field">
             <label style="color:var(--accent2)">- Flete</label>
             <input type="number" value="${e.flete || 0}"
-              style="border-color: rgba(59,130,246,0.3); color: var(--accent2);"
+              style="border-color:rgba(59,130,246,0.3);color:var(--accent2);"
               onchange="actualizarMonto(${e.id}, 'flete', this.value)"
               oninput="actualizarMonto(${e.id}, 'flete', this.value)" placeholder="0" />
           </div>
@@ -886,7 +792,39 @@
     }).join('');
   }
 
-  actualizarFiltrosCiudad();
+  // ─── FILTROS CIUDAD ────────────────────────────────────────────────────────
+  function actualizarFiltrosCiudad() {
+    const ciudades = [...new Set(envios.map(e => e.ciudad).filter(Boolean))];
+    const cont = document.getElementById('filtrosContainer');
+    cont.querySelectorAll('.filtro-ciudad').forEach(b => b.remove());
+    ciudades.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'filtro-btn filtro-ciudad';
+      btn.textContent = '📍 ' + c;
+      btn.onclick = function() { filtrar('ciudad:' + c, btn); };
+      cont.appendChild(btn);
+    });
+  }
+
+  // ─── INIT: cargar desde Sheets al abrir ───────────────────────────────────
+  (async function init() {
+    try {
+      const res  = await fetch(`${SCRIPT_URL}?sheetId=${SHEET_ID}`);
+      const data = await res.json();
+      if (data.ok) {
+        envios = data.data || [];
+      }
+    } catch (e) {
+      // si no hay conexión, arranca vacío
+    }
+    renderLista();
+    actualizarResumen();
+    actualizarFiltrosCiudad();
+    // Ocultar pantalla de carga
+    const overlay = document.getElementById('loadingOverlay');
+    overlay.classList.add('hidden');
+    setTimeout(() => overlay.style.display = 'none', 400);
+  })();
 </script>
 </body>
 </html>
