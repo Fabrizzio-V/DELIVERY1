@@ -46,6 +46,45 @@
     align-items: center;
     margin-bottom: 4px;
   }
+  .header-btns { display: flex; gap: 8px; align-items: center; }
+  .btn-sync {
+    background: var(--surface2);
+    color: var(--accent2);
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+  }
+  .btn-sync:active { opacity: 0.7; }
+  .btn-sync.syncing { opacity: 0.6; pointer-events: none; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 999;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.ok { color: var(--green); border-color: rgba(34,197,94,0.3); }
+  .toast.err { color: var(--red); border-color: rgba(239,68,68,0.3); }
   .header h1 {
     font-family: 'Syne', sans-serif;
     font-size: 20px;
@@ -408,9 +447,15 @@
       <h1>📦 MIS ENTREGAS</h1>
       <div class="fecha" id="fechaHoy"></div>
     </div>
-    <button class="btn-add-top" onclick="abrirModal()">+ Agregar</button>
+    <div class="header-btns">
+      <button class="btn-sync" id="btnSync" onclick="sincronizarSheets()">☁️ Sync</button>
+      <button class="btn-add-top" onclick="abrirModal()">+ Agregar</button>
+    </div>
   </div>
 </div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
 <!-- RESUMEN -->
 <div class="resumen">
@@ -487,6 +532,41 @@
 </div>
 
 <script>
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxKjbF4VbdSUgsO4MULNZm2pSh1khlrvZhUKTfKdYwzo6_WxPg_rPbLiNlyD5NLY90C/exec';
+  const SHEET_ID   = '1NLC-CqqtRxiC4FhPjgfNVaG3kPQZMAVY1-HTfitgo18';
+
+  function mostrarToast(msg, tipo = 'ok', duracion = 3000) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + tipo;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), duracion);
+  }
+
+  async function sincronizarSheets() {
+    if (envios.length === 0) { mostrarToast('⚠️ No hay envíos para guardar', 'err'); return; }
+    const btn = document.getElementById('btnSync');
+    btn.classList.add('syncing');
+    btn.textContent = '⏳ Guardando...';
+    const fecha = new Date().toLocaleDateString('es-PY', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'guardar_dia', sheetId: SHEET_ID, fecha, envios }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        mostrarToast('✅ Guardado en Google Sheets', 'ok');
+      } else {
+        mostrarToast('❌ Error: ' + (data.error || 'desconocido'), 'err', 5000);
+      }
+    } catch (err) {
+      mostrarToast('❌ Sin conexión o error de red', 'err', 5000);
+    }
+    btn.classList.remove('syncing');
+    btn.textContent = '☁️ Sync';
+  }
+
   let envios = JSON.parse(localStorage.getItem('envios_dia') || '[]');
   let filtroActivo = 'todos';
   let editandoId = null;
@@ -672,8 +752,8 @@
         <div class="envio-header">
           <div class="envio-info">
             <div class="envio-nombre">${e.nombre}</div>
-            <div class="envio-ciudad">📍 ${e.ciudad}${e.nota ? <span style="color:var(--accent);font-size:10px"> · ${e.nota}</span> : ''}</div>
-            ${e.telefono ? <div style="font-size:11px;color:var(--muted);margin-top:2px">📞 ${e.telefono}</div> : ''}
+            <div class="envio-ciudad">📍 ${e.ciudad}${e.nota ? `<span style="color:var(--accent);font-size:10px"> · ${e.nota}</span>` : ''}</div>
+            ${e.telefono ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">📞 ${e.telefono}</div>` : ''}
           </div>
         </div>
         
@@ -744,7 +824,7 @@
         const container = document.getElementById('listaEnvios');
         const lista = envios.filter(e => e.ciudad === c);
         if (lista.length === 0) {
-          container.innerHTML = <div class="empty"><div class="icon">📍</div><h3>Sin envíos en ${c}</h3></div>;
+          container.innerHTML = `<div class="empty"><div class="icon">📍</div><h3>Sin envíos en ${c}</h3></div>`;
         } else {
           renderListaCustom(lista);
         }
@@ -764,8 +844,8 @@
         <div class="envio-header">
           <div class="envio-info">
             <div class="envio-nombre">${e.nombre}</div>
-            <div class="envio-ciudad">📍 ${e.ciudad}${e.nota ? <span style="color:var(--accent);font-size:10px"> · ${e.nota}</span> : ''}</div>
-            ${e.telefono ? <div style="font-size:11px;color:var(--muted);margin-top:2px">📞 ${e.telefono}</div> : ''}
+            <div class="envio-ciudad">📍 ${e.ciudad}${e.nota ? `<span style="color:var(--accent);font-size:10px"> · ${e.nota}</span>` : ''}</div>
+            ${e.telefono ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">📞 ${e.telefono}</div>` : ''}
           </div>
         </div>
         <div class="estado-ciclo">
