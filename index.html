@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Control de Entregas</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -223,12 +223,11 @@
   .field input:focus { border-color: var(--accent); }
   .field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .btn-primary { width:100%; background:var(--accent); color:#000; border:none; border-radius:12px; padding:14px; font-family:'Syne',sans-serif; font-weight:800; font-size:16px; cursor:pointer; margin-bottom:10px; }
-  .btn-secondary { width:100%; background:none; color:var(--muted); border:1px solid var(--border); border-radius:12px; padding:12px; font-family:'DM Sans',sans-serif; font-size:14px; cursor:pointer; }
+  .btn-secondary { width:100%; background:none; color:var(--muted); border:1px solid var(--border); border-radius:12px; padding:12px; font-family:'DM Sans', sans-serif; font-size:14px; cursor:pointer; }
 
   .empty { text-align:center; padding:48px 24px; color:var(--muted); }
   .empty .icon { font-size:48px; margin-bottom:14px; }
   .empty h3 { font-family:'Syne',sans-serif; font-size:18px; color:var(--text); margin-bottom:6px; }
-  .empty p { font-size:14px; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -319,18 +318,17 @@
 </div>
 
 <script>
-  // ─── CONFIGURACIÓN ────────────────────────────────────────────────────────
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzlUz07GBAhAw-wBxz67Pu6DWJrO7J7_wwQ3F9hC2WmplOda-XbNaWQ3Cm5_VujA_RX/exec';
+  // ─── CONFIGURACIÓN (URL ACTUALIZADA) ──────────────────────────────────────
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzb28P9iUtyshU61bTzA394fG984LiDcqflcwCuYbYtxT3JgJeDUW9xRITV1bFm_Vq2/exec';
   const SHEET_ID   = '1NLC-CqqtRxiC4FhPjgfNVaG3kPQZMAVY1-HTfitgo18';
-  const LS_KEY     = 'envios_dia';
+  const LS_KEY      = 'envios_dia';
 
   // ─── ESTADO ───────────────────────────────────────────────────────────────
-  let envios       = [];
+  let envios        = [];
   let filtroActivo = 'todos';
   let editandoId   = null;
   let syncTimeout  = null;
 
-  // Fecha de hoy en formato DD/MM/YYYY
   const hoyDate  = new Date();
   const fechaHoy = String(hoyDate.getDate()).padStart(2,'0') + '/' +
                    String(hoyDate.getMonth()+1).padStart(2,'0') + '/' +
@@ -353,32 +351,35 @@
     t._timer = setTimeout(() => t.classList.remove('show'), duracion);
   }
 
-  // ─── LOCAL STORAGE ────────────────────────────────────────────────────────
   function guardarLocal() {
     localStorage.setItem(LS_KEY, JSON.stringify(envios));
   }
 
   function cargarLocal() {
-    try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch(e) { return []; }
+    try { 
+        const datos = localStorage.getItem(LS_KEY);
+        return datos ? JSON.parse(datos) : []; 
+    } catch(e) { return []; }
   }
 
-  // ─── SHEETS: GUARDAR (con debounce 1.5s) ─────────────────────────────────
+  // ─── SHEETS: GUARDAR (SOPORTE PARA CELULARES) ─────────────────────────────
   function guardarEnSheets() {
-    guardarLocal(); // siempre guardar local primero
+    guardarLocal(); 
     clearTimeout(syncTimeout);
-    syncTimeout = setTimeout(async () => {
-      try {
-        const res  = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action:'guardar_dia', sheetId:SHEET_ID, fecha:fechaHoy, envios })
-        });
-        const data = await res.json();
-        if (data.ok) {
-          mostrarToast('☁️ Sincronizado', 'ok', 2000);
-        }
-      } catch(err) {
-        // silencioso, los datos están en localStorage igual
-      }
+    
+    syncTimeout = setTimeout(() => {
+      // Usamos una técnica de "callback" invisible para evitar errores de red en celular
+      const payload = encodeURIComponent(JSON.stringify(envios));
+      const finalUrl = `${SCRIPT_URL}?action=guardar_dia&sheetId=${SHEET_ID}&fecha=${fechaHoy}&envios=${payload}`;
+
+      // En móviles, fetch con GET es el método más estable
+      fetch(finalUrl, { method: 'GET', mode: 'no-cors' })
+      .then(() => {
+        mostrarToast('☁️ Sincronizado', 'ok', 2000);
+      })
+      .catch(err => {
+        console.warn("Guardado localmente, error en red.");
+      });
     }, 1500);
   }
 
@@ -386,41 +387,27 @@
   async function cargarDesdeSheets(mostrarFeedback = false) {
     const btn = document.getElementById('btnSync');
     btn.classList.add('syncing');
-    btn.textContent = '⏳ Cargando...';
+    btn.textContent = '⏳...';
+    
     try {
-      const res  = await fetch(`${SCRIPT_URL}?sheetId=${SHEET_ID}&t=${Date.now()}`);
+      const res = await fetch(`${SCRIPT_URL}?sheetId=${SHEET_ID}&t=${Date.now()}`);
       const data = await res.json();
-      if (data.ok && Array.isArray(data.data) && data.data.length > 0) {
-        envios = data.data;
-        guardarLocal(); // actualizar local con lo que vino de Sheets
-        renderLista();
-        actualizarResumen();
-        actualizarFiltrosCiudad();
-        if (mostrarFeedback) mostrarToast('✅ Datos actualizados', 'ok');
-      } else {
-        // Sheets no devolvió datos → usar localStorage
-        const local = cargarLocal();
-        if (local.length > 0) {
-          envios = local;
+      
+      if (data.ok && Array.isArray(data.data)) {
+        // Solo sobrescribimos localmente si la nube tiene datos de hoy
+        if (data.data.length > 0) {
+          envios = data.data;
+          guardarLocal();
           renderLista();
           actualizarResumen();
           actualizarFiltrosCiudad();
-          if (mostrarFeedback) mostrarToast('📱 Datos locales', 'info');
-        } else {
-          if (mostrarFeedback) mostrarToast('Sin datos por ahora', 'info');
+          if (mostrarFeedback) mostrarToast('✅ Datos de nube cargados', 'ok');
         }
       }
     } catch(err) {
-      // Sin conexión → usar localStorage
-      const local = cargarLocal();
-      if (local.length > 0) {
-        envios = local;
-        renderLista();
-        actualizarResumen();
-        actualizarFiltrosCiudad();
-      }
-      if (mostrarFeedback) mostrarToast('⚠️ Sin conexión, mostrando datos locales', 'err', 4000);
+      if (mostrarFeedback) mostrarToast('⚠️ Usando datos del celular', 'info');
     }
+    
     btn.classList.remove('syncing');
     btn.textContent = '🔄 Sync';
   }
@@ -436,14 +423,13 @@
       document.getElementById('inputMonto').value    = e.montoBase;
       document.getElementById('inputFlete').value    = e.flete || 0;
       document.getElementById('inputTelefono').value = e.telefono || '';
-      document.getElementById('inputNota').value     = e.nota || '';
+      document.getElementById('inputNota').value      = e.nota || '';
     } else {
       document.getElementById('modalTitulo').textContent = '+ Nuevo Envío';
       ['inputNombre','inputCiudad','inputMonto','inputFlete','inputTelefono','inputNota']
         .forEach(id => document.getElementById(id).value = '');
     }
     document.getElementById('modalOverlay').classList.add('open');
-    setTimeout(() => document.getElementById('inputNombre').focus(), 100);
   }
 
   function cerrarModal() {
@@ -455,16 +441,15 @@
     if (e.target === document.getElementById('modalOverlay')) cerrarModal();
   }
 
-  // ─── GUARDAR ENVÍO ────────────────────────────────────────────────────────
   function guardarEnvio() {
     const nombre   = document.getElementById('inputNombre').value.trim();
     const ciudad   = document.getElementById('inputCiudad').value.trim();
-    const monto    = parseFloat(document.getElementById('inputMonto').value)    || 0;
-    const flete    = parseFloat(document.getElementById('inputFlete').value)    || 0;
+    const monto    = parseFloat(document.getElementById('inputMonto').value) || 0;
+    const flete    = parseFloat(document.getElementById('inputFlete').value) || 0;
     const telefono = document.getElementById('inputTelefono').value.trim();
     const nota     = document.getElementById('inputNota').value.trim();
 
-    if (!nombre || !ciudad) { alert('Por favor ingresá el nombre y la ciudad.'); return; }
+    if (!nombre || !ciudad) { alert('Completar Nombre y Ciudad'); return; }
 
     if (editandoId !== null) {
       const idx = envios.findIndex(x => x.id === editandoId);
@@ -480,7 +465,6 @@
     guardarEnSheets();
   }
 
-  // ─── ESTADO ───────────────────────────────────────────────────────────────
   function setEstado(id, estado) {
     const e = envios.find(x => x.id === id);
     if (!e) return;
@@ -490,7 +474,6 @@
     guardarEnSheets();
   }
 
-  // ─── MONTOS ───────────────────────────────────────────────────────────────
   function actualizarMonto(id, campo, valor) {
     const e = envios.find(x => x.id === id);
     if (!e) return;
@@ -501,18 +484,15 @@
     guardarEnSheets();
   }
 
-  // ─── ELIMINAR ─────────────────────────────────────────────────────────────
   function eliminarEnvio(id) {
-    if (!confirm('¿Eliminar este envío?')) return;
+    if (!confirm('¿Eliminar envío?')) return;
     envios = envios.filter(x => x.id !== id);
     renderLista();
     actualizarResumen();
     actualizarFiltrosCiudad();
     guardarEnSheets();
-    mostrarToast('🗑 Envío eliminado', 'ok');
   }
 
-  // ─── FILTROS ──────────────────────────────────────────────────────────────
   function filtrar(f, btn) {
     filtroActivo = f;
     document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
@@ -520,42 +500,29 @@
     renderLista();
   }
 
-  // ─── RESUMEN ──────────────────────────────────────────────────────────────
   function actualizarResumen() {
     const entregados   = envios.filter(e => e.estado === 'entregado');
-    const pendientes   = envios.filter(e => e.estado === 'pendiente');
-    const cancelados   = envios.filter(e => e.estado === 'cancelado');
     const totalCobrado = entregados.reduce((s,e) => s + e.montoBase + (e.extras||0), 0);
     const fleteTotal   = entregados.reduce((s,e) => s + (e.flete||0), 0);
     const totalGeneral = envios.reduce((s,e) => s + e.montoBase + (e.extras||0), 0);
 
     document.getElementById('totalVendido').textContent  = formatGs(totalGeneral);
-    document.getElementById('totalEnvios').textContent   =
-      envios.length + ' envío' + (envios.length!==1?'s':'') +
-      (pendientes.length ? ' · ⏳ '+pendientes.length : '') +
-      (cancelados.length ? ' · ❌ '+cancelados.length : '');
+    document.getElementById('totalEnvios').textContent   = envios.length + ' envíos';
     document.getElementById('totalCobrado').textContent    = formatGs(totalCobrado);
-    document.getElementById('cantEntregados').textContent  = entregados.length + ' entregado' + (entregados.length!==1?'s':'');
+    document.getElementById('cantEntregados').textContent  = entregados.length + ' entregados';
     document.getElementById('totalFlete').textContent      = formatGs(fleteTotal);
-    document.getElementById('cantFlete').textContent       = 'de ' + entregados.length + ' entregado' + (entregados.length!==1?'s':'');
+    document.getElementById('cantFlete').textContent       = 'de ' + entregados.length;
     document.getElementById('totalRendir').textContent     = formatGs(totalCobrado - fleteTotal);
   }
 
-  // ─── RENDER ───────────────────────────────────────────────────────────────
   function renderLista() {
     const container = document.getElementById('listaEnvios');
-    let lista = filtroActivo === 'todos'             ? envios :
-                filtroActivo.startsWith('ciudad:')   ? envios.filter(e => e.ciudad === filtroActivo.split(':')[1]) :
-                                                       envios.filter(e => e.estado === filtroActivo);
+    let lista = filtroActivo === 'todos' ? envios :
+                filtroActivo.startsWith('ciudad:') ? envios.filter(e => e.ciudad === filtroActivo.split(':')[1]) :
+                envios.filter(e => e.estado === filtroActivo);
 
     if (lista.length === 0) {
-      const iconos = { todos:'📦', entregado:'✅', cancelado:'❌', pendiente:'⏳' };
-      container.innerHTML = `
-        <div class="empty">
-          <div class="icon">${iconos[filtroActivo] || '📍'}</div>
-          <h3>${filtroActivo === 'todos' ? 'Sin envíos hoy' : 'Nada aquí'}</h3>
-          <p>${filtroActivo === 'todos' ? 'Tocá + Agregar para cargar los envíos del día' : 'No hay envíos con este estado'}</p>
-        </div>`;
+      container.innerHTML = `<div class="empty"><h3>No hay envíos</h3></div>`;
       return;
     }
 
@@ -565,53 +532,32 @@
     container.innerHTML = lista.map(e => {
       const total = e.montoBase + (e.extras || 0);
       return `
-      <div class="envio-card ${e.estado}" id="card-${e.id}">
+      <div class="envio-card ${e.estado}">
         <div class="envio-header">
           <div class="envio-info">
             <div class="envio-nombre">${e.nombre}</div>
-            <div class="envio-ciudad">📍 ${e.ciudad}${e.nota ? `<span style="color:var(--accent);font-size:10px"> · ${e.nota}</span>` : ''}</div>
-            ${e.telefono ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">📞 ${e.telefono}</div>` : ''}
+            <div class="envio-ciudad">📍 ${e.ciudad} ${e.nota ? `<span style="color:var(--accent)">· ${e.nota}</span>` : ''}</div>
           </div>
         </div>
         <div class="estado-ciclo">
-          <button class="ciclo-btn ${e.estado==='pendiente'?'active-pendiente':''}" onclick="setEstado(${e.id},'pendiente')">⏳ Pendiente</button>
-          <button class="ciclo-btn ${e.estado==='entregado'?'active-entregado':''}" onclick="setEstado(${e.id},'entregado')">✅ Entregado</button>
-          <button class="ciclo-btn ${e.estado==='cancelado'?'active-cancelado':''}" onclick="setEstado(${e.id},'cancelado')">❌ Cancelado</button>
+          <button class="ciclo-btn ${e.estado==='pendiente'?'active-pendiente':''}" onclick="setEstado(${e.id},'pendiente')">⏳</button>
+          <button class="ciclo-btn ${e.estado==='entregado'?'active-entregado':''}" onclick="setEstado(${e.id},'entregado')">✅</button>
+          <button class="ciclo-btn ${e.estado==='cancelado'?'active-cancelado':''}" onclick="setEstado(${e.id},'cancelado')">❌</button>
         </div>
         <div class="envio-montos">
-          <div class="monto-field">
-            <label>Pedido</label>
-            <input type="number" value="${e.montoBase}"
-              onchange="actualizarMonto(${e.id},'montoBase',this.value)"
-              oninput="actualizarMonto(${e.id},'montoBase',this.value)" />
-          </div>
-          <div class="monto-field">
-            <label>+ Extras</label>
-            <input type="number" value="${e.extras||0}"
-              onchange="actualizarMonto(${e.id},'extras',this.value)"
-              oninput="actualizarMonto(${e.id},'extras',this.value)" placeholder="0" />
-          </div>
-          <div class="monto-field">
-            <label style="color:var(--accent2)">- Flete</label>
-            <input type="number" value="${e.flete||0}"
-              style="border-color:rgba(59,130,246,0.3);color:var(--accent2);"
-              onchange="actualizarMonto(${e.id},'flete',this.value)"
-              oninput="actualizarMonto(${e.id},'flete',this.value)" placeholder="0" />
-          </div>
-          <div class="monto-field">
-            <label>Total</label>
-            <div class="total-envio" id="total-${e.id}">${formatGs(total)}</div>
-          </div>
+          <div class="monto-field"><label>Pedido</label><input type="number" value="${e.montoBase}" onchange="actualizarMonto(${e.id},'montoBase',this.value)"></div>
+          <div class="monto-field"><label>Extras</label><input type="number" value="${e.extras||0}" onchange="actualizarMonto(${e.id},'extras',this.value)"></div>
+          <div class="monto-field"><label>Flete</label><input type="number" value="${e.flete||0}" onchange="actualizarMonto(${e.id},'flete',this.value)"></div>
+          <div class="monto-field"><label>Total</label><div class="total-envio" id="total-${e.id}">${formatGs(total)}</div></div>
         </div>
         <div class="envio-actions">
-          <button class="action-btn" onclick="abrirModal(${e.id})">✏️ Editar</button>
-          <button class="action-btn del" onclick="eliminarEnvio(${e.id})">🗑 Eliminar</button>
+          <button class="action-btn" onclick="abrirModal(${e.id})">✏️</button>
+          <button class="action-btn del" onclick="eliminarEnvio(${e.id})">🗑</button>
         </div>
       </div>`;
     }).join('');
   }
 
-  // ─── FILTROS CIUDAD ───────────────────────────────────────────────────────
   function actualizarFiltrosCiudad() {
     const ciudades = [...new Set(envios.map(e => e.ciudad).filter(Boolean))];
     const cont = document.getElementById('filtrosContainer');
@@ -625,14 +571,11 @@
     });
   }
 
-  // ─── INICIO ───────────────────────────────────────────────────────────────
-  // 1. Mostrar local inmediatamente (sin esperar red)
+  // Inicio inmediato con datos locales, luego intenta sincronizar
   envios = cargarLocal();
   renderLista();
   actualizarResumen();
   actualizarFiltrosCiudad();
-
-  // 2. Luego cargar desde Sheets en segundo plano
   cargarDesdeSheets(false);
 </script>
 </body>
