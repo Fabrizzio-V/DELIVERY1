@@ -3,266 +3,75 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Control de Entregas Pro</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Control de Entregas - Fijo</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0d0f14; --surface: #161a23; --surface2: #1e2330; --border: #2a3145;
-    --accent: #f0c040; --accent2: #3b82f6; --green: #22c55e; --red: #ef4444;
-    --orange: #f97316; --text: #e8ecf4; --muted: #6b7a99; --card-r: 16px;
+    --bg: #0d0f14; --surface: #161a23; --border: #2a3145;
+    --accent: #f0c040; --green: #22c55e; --red: #ef4444; --text: #e8ecf4; --muted: #6b7a99;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; padding-bottom: 100px; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; padding-bottom: 100px; }
   
-  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 20px 14px; position: sticky; top: 0; z-index: 100; }
-  .header-top { display: flex; justify-content: space-between; align-items: center; }
-  .header-btns { display: flex; gap: 8px; }
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 15px 20px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+  .btn-sync { background: #1e2330; color: #3b82f6; border: 1px solid rgba(59,130,246,0.3); padding: 8px 12px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+  .btn-add { background: var(--accent); color: #000; border: none; padding: 8px 15px; border-radius: 10px; font-weight: 700; }
+
+  .resumen { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .card { background: var(--surface); padding: 15px; border-radius: 15px; border: 1px solid var(--border); }
+  .card .val { font-family: 'Syne'; font-size: 20px; font-weight: 800; color: var(--accent); }
   
-  .btn-sync { background: var(--surface2); color: var(--accent2); border: 1px solid rgba(59,130,246,0.3); border-radius: 10px; padding: 8px 12px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; transition: 0.2s; }
-  .btn-sync.syncing { opacity: 0.5; animation: pulse 1s infinite; }
-  @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-
-  .btn-add-top { background: var(--accent); color: #000; border: none; border-radius: 10px; padding: 8px 14px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; }
-
-  .resumen { padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .resumen-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-r); padding: 14px; position: relative; overflow: hidden; }
-  .resumen-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
-  .resumen-card.total::before { background: var(--accent); }
-  .resumen-card.entregado::before { background: var(--green); }
-  .resumen-card .label { font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:500; }
-  .resumen-card .monto { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; margin-top:5px; }
-
-  .filtros { padding: 0 16px 14px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
-  .filtro-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); border-radius: 20px; padding: 6px 14px; font-size: 12px; white-space: nowrap; cursor: pointer; }
-  .filtro-btn.active { background:var(--accent); border-color:var(--accent); color:#000; font-weight:600; }
-
-  .lista { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
-  .envio-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-r); overflow: hidden; border-left: 4px solid var(--muted); }
+  .lista { padding: 0 15px; display: flex; flex-direction: column; gap: 10px; }
+  .envio-card { background: var(--surface); border: 1px solid var(--border); border-radius: 15px; padding: 15px; border-left: 5px solid var(--muted); }
   .envio-card.entregado { border-left-color: var(--green); }
-  .envio-card.cancelado { border-left-color: var(--red); opacity: 0.8; }
-  
-  .envio-header { padding: 14px; display: flex; justify-content: space-between; }
-  .envio-nombre { font-family:'Syne',sans-serif; font-weight:700; font-size:16px; }
-  .envio-ciudad { font-size:12px; color:var(--muted); }
+  .envio-card.cancelado { border-left-color: var(--red); opacity: 0.7; }
 
-  .envio-montos { padding: 0 14px 14px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-  .monto-field label { font-size:9px; color:var(--muted); text-transform:uppercase; display:block; margin-bottom:2px; }
-  .monto-field input { background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); width:100%; padding:6px; font-weight:700; outline:none; }
+  .monto-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .monto-row input { background: #1e2330; border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 8px; width: 100%; font-weight: 700; }
   
-  .estado-ciclo { display: flex; gap: 5px; padding: 0 14px 10px; }
-  .ciclo-btn { flex:1; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-size: 14px; cursor: pointer; }
-  .ciclo-btn.active-pendiente { background: rgba(107,122,153,0.2); color: #fff; border-color: var(--muted); }
-  .ciclo-btn.active-entregado { background: rgba(34,197,94,0.2); color: var(--green); border-color: var(--green); }
-  .ciclo-btn.active-cancelado { background: rgba(239,68,68,0.2); color: var(--red); border-color: var(--red); }
+  .btns-estado { display: flex; gap: 5px; margin-top: 10px; }
+  .btns-estado button { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: #1e2330; color: var(--muted); cursor: pointer; }
+  .btns-estado button.active { background: var(--accent); color: #000; font-weight: 700; }
 
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--surface2); border: 1px solid var(--accent); padding: 10px 20px; border-radius: 10px; font-size: 13px; z-index: 1000; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-  
-  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:200; align-items:flex-end; }
-  .modal-overlay.open { display:flex; }
-  .modal { background:var(--surface); width:100%; padding:20px; border-radius:20px 20px 0 0; border-top: 1px solid var(--border); }
+  .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:200; align-items:center; padding: 20px; }
+  .modal.open { display:flex; }
+  .modal-cont { background: var(--surface); width: 100%; padding: 20px; border-radius: 20px; }
+  .modal-cont input { width: 100%; padding: 12px; margin-bottom: 10px; background: #1e2330; border: 1px solid var(--border); color: #fff; border-radius: 10px; }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="header-top">
-    <div>
-      <h1 style="font-family:'Syne'; font-size:18px; color:var(--accent)">MIS ENTREGAS</h1>
-      <div style="font-size: 11px; color: var(--muted);" id="fechaDisplay"></div>
-    </div>
-    <div class="header-btns">
-      <button class="btn-sync" id="btnSync" onclick="cargarDesdeSheets(true)">🔄 Actualizar</button>
-      <button class="btn-add-top" onclick="abrirModal()">+ Nuevo</button>
-    </div>
+  <div><h1 style="font-family:'Syne'; font-size:18px; color:var(--accent)">MIS ENTREGAS</h1></div>
+  <div style="display:flex; gap:8px;">
+    <button class="btn-sync" id="btnSync" onclick="cargar(true)">🔄 Actualizar</button>
+    <button class="btn-add" onclick="abrir()">+ Nuevo</button>
   </div>
 </div>
-
-<div id="toast" class="toast"></div>
 
 <div class="resumen">
-  <div class="resumen-card total">
-    <div class="label">Total Pedidos</div>
-    <div class="monto" id="resTotal">₲ 0</div>
-  </div>
-  <div class="resumen-card entregado">
-    <div class="label">Cobrado (Neto)</div>
-    <div class="monto" id="resRendir">₲ 0</div>
-  </div>
-</div>
-
-<div class="filtros" id="filtros">
-  <button class="filtro-btn active" onclick="filtrar('todos', this)">Todos</button>
+  <div class="card"><div>Vendido</div><div class="val" id="resVendido">₲ 0</div></div>
+  <div class="card"><div>A Rendir</div><div class="val" id="resRendir" style="color:var(--green)">₲ 0</div></div>
 </div>
 
 <div id="lista" class="lista"></div>
 
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <h2 style="margin-bottom:15px; font-family:'Syne'">Nuevo Envío</h2>
-    <div style="display:grid; gap:12px; margin-bottom:20px">
-      <input type="text" id="inNombre" placeholder="Nombre Cliente" style="width:100%; background:var(--surface2); border:1px solid var(--border); padding:12px; border-radius:10px; color:#fff;">
-      <input type="text" id="inCiudad" placeholder="Ciudad / Barrio" style="width:100%; background:var(--surface2); border:1px solid var(--border); padding:12px; border-radius:10px; color:#fff;">
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-        <input type="number" id="inMonto" placeholder="Monto Pedido" style="width:100%; background:var(--surface2); border:1px solid var(--border); padding:12px; border-radius:10px; color:#fff;">
-        <input type="number" id="inFlete" placeholder="Flete" style="width:100%; background:var(--surface2); border:1px solid var(--border); padding:12px; border-radius:10px; color:#fff;">
-      </div>
-    </div>
-    <button style="width:100%; background:var(--accent); border:none; padding:15px; border-radius:10px; font-weight:800; margin-bottom:10px;" onclick="guardarNuevo()">Guardar en Planilla</button>
-    <button style="width:100%; background:none; border:1px solid var(--border); padding:10px; border-radius:10px; color:var(--muted)" onclick="cerrarModal()">Cancelar</button>
+<div class="modal" id="modal">
+  <div class="modal-cont">
+    <h2 style="margin-bottom:15px">Nuevo Envío</h2>
+    <input type="text" id="inNom" placeholder="Nombre Cliente">
+    <input type="text" id="inCiu" placeholder="Ciudad">
+    <input type="number" id="inMon" placeholder="Monto Pedido">
+    <input type="number" id="inFle" placeholder="Flete">
+    <button onclick="guardar()" style="width:100%; padding:15px; background:var(--accent); border:none; border-radius:10px; font-weight:800;">GUARDAR</button>
+    <button onclick="cerrar()" style="width:100%; padding:10px; background:none; color:var(--muted); border:none; margin-top:5px;">Cancelar</button>
   </div>
 </div>
 
 <script>
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwoYVc0I_Jv6cXAgvp3HTV3ZEixU9jEq3UQ9UUxA3tWDZ8jI0I3pH6Y5_2Ws37pI4oy/exec';
-  const SHEET_ID   = '1NLC-CqqtRxiC4FhPjgfNVaG3kPQZMAVY1-HTfitgo18';
-  
+  const URL = 'https://script.google.com/macros/s/AKfycbyRIxMoD-q8ZqiOA5BmNAAk0YHShpP9yB08BbqdMST-xiWcFAX9GwWAY8W0uWMaxaDv/exec';
+  const ID_HOJA = '1NLC-CqqtRxiC4FhPjgfNVaG3kPQZMAVY1-HTfitgo18';
   let envios = [];
-  let filtroActual = 'todos';
-  const hoyStr = new Date().toLocaleDateString('es-PY', { day:'2-digit', month:'2-digit', year:'numeric' });
-  document.getElementById('fechaDisplay').textContent = hoyStr;
 
-  function mostrarToast(txt) {
-    const t = document.getElementById('toast');
-    t.textContent = txt; t.style.display = 'block';
-    setTimeout(() => t.style.display = 'none', 3000);
-  }
-
-  // --- CARGA DESDE SHEETS MEJORADA ---
-  async function cargarDesdeSheets(feedback = false) {
-    const btn = document.getElementById('btnSync');
-    btn.classList.add('syncing');
-    try {
-      const resp = await fetch(`${SCRIPT_URL}?sheetId=${SHEET_ID}&nocache=${Date.now()}`);
-      const res = await resp.json();
-      
-      if (res.ok && Array.isArray(res.data)) {
-        // Filtramos por la fecha de hoy que viene del script
-        const datosHoy = res.data.filter(item => item.fecha === hoyStr);
-        
-        // Solo actualizamos si realmente hay datos en la nube para hoy
-        if (datosHoy.length > 0) {
-          envios = datosHoy;
-          render();
-          if (feedback) mostrarToast("✅ Datos sincronizados");
-        } else {
-          if (feedback) mostrarToast("📭 No hay datos nuevos en la nube");
-        }
-      }
-    } catch(e) {
-      mostrarToast("❌ Error al leer planilla");
-    } finally {
-      btn.classList.remove('syncing');
-    }
-  }
-
-  async function enviarASheets() {
-    const payload = encodeURIComponent(JSON.stringify(envios));
-    const url = `${SCRIPT_URL}?action=guardar_dia&sheetId=${SHEET_ID}&fecha=${hoyStr}&envios=${payload}&t=${Date.now()}`;
-    fetch(url, { method: 'GET', mode: 'no-cors' });
-    mostrarToast("☁️ Guardando...");
-  }
-
-  function render() {
-    const container = document.getElementById('lista');
-    const filtrados = filtroActual === 'todos' ? envios : envios.filter(e => e.ciudad === filtroActual);
-    
-    let totalVendido = 0;
-    let totalRendir = 0;
-
-    container.innerHTML = filtrados.map(e => {
-      totalVendido += (Number(e.montoBase) + Number(e.extras || 0));
-      if (e.estado === 'entregado') {
-        totalRendir += (Number(e.montoBase) + Number(e.extras || 0) - Number(e.flete));
-      }
-
-      return `
-        <div class="envio-card ${e.estado}">
-          <div class="envio-header">
-            <div>
-              <div class="envio-nombre">${e.nombre}</div>
-              <div class="envio-ciudad">📍 ${e.ciudad}</div>
-            </div>
-            <button onclick="eliminar(${e.id})" style="background:none; border:none; color:var(--red); font-size:18px;">🗑</button>
-          </div>
-          <div class="estado-ciclo">
-            <button class="ciclo-btn ${e.estado==='pendiente'?'active-pendiente':''}" onclick="cambiarEstado(${e.id},'pendiente')">⏳</button>
-            <button class="ciclo-btn ${e.estado==='entregado'?'active-entregado':''}" onclick="cambiarEstado(${e.id},'entregado')">✅</button>
-            <button class="ciclo-btn ${e.estado==='cancelado'?'active-cancelado':''}" onclick="cambiarEstado(${e.id},'cancelado')">❌</button>
-          </div>
-          <div class="envio-montos">
-            <div class="monto-field"><label>Pedido</label><input type="number" value="${e.montoBase}" onchange="edit(${e.id},'montoBase',this.value)"></div>
-            <div class="monto-field"><label>Flete</label><input type="number" value="${e.flete}" onchange="edit(${e.id},'flete',this.value)"></div>
-            <div class="monto-field"><label>Total</label><div style="font-weight:800; font-size:14px; margin-top:5px">₲ ${(Number(e.montoBase) + Number(e.extras||0)).toLocaleString('es-PY')}</div></div>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    document.getElementById('resTotal').textContent = '₲ ' + totalVendido.toLocaleString('es-PY');
-    document.getElementById('resRendir').textContent = '₲ ' + totalRendir.toLocaleString('es-PY');
-    actualizarFiltros();
-  }
-
-  function cambiarEstado(id, estado) {
-    const e = envios.find(x => x.id === id);
-    if(e) { e.estado = estado; render(); enviarASheets(); }
-  }
-
-  function edit(id, campo, valor) {
-    const e = envios.find(x => x.id === id);
-    if(e) { e[campo] = parseFloat(valor) || 0; render(); enviarASheets(); }
-  }
-
-  function eliminar(id) {
-    if(confirm("¿Eliminar este envío?")) {
-      envios = envios.filter(x => x.id !== id);
-      render(); enviarASheets();
-    }
-  }
-
-  function abrirModal() { document.getElementById('modalOverlay').classList.add('open'); }
-  function cerrarModal() { document.getElementById('modalOverlay').classList.remove('open'); }
-
-  function guardarNuevo() {
-    const nombre = document.getElementById('inNombre').value;
-    const ciudad = document.getElementById('inCiudad').value;
-    if(!nombre || !ciudad) return alert("Completa nombre y ciudad");
-
-    envios.push({
-      id: Date.now(),
-      nombre, ciudad,
-      montoBase: parseFloat(document.getElementById('inMonto').value) || 0,
-      flete: parseFloat(document.getElementById('inFlete').value) || 0,
-      extras: 0,
-      estado: 'pendiente',
-      fecha: hoyStr
-    });
-    
-    document.getElementById('inNombre').value = '';
-    document.getElementById('inCiudad').value = '';
-    document.getElementById('inMonto').value = '';
-    document.getElementById('inFlete').value = '';
-    
-    cerrarModal(); render(); enviarASheets();
-  }
-
-  function actualizarFiltros() {
-    const ciudades = [...new Set(envios.map(e => e.ciudad))];
-    const f = document.getElementById('filtros');
-    let html = `<button class="filtro-btn ${filtroActual==='todos'?'active':''}" onclick="filtrar('todos', this)">Todos</button>`;
-    ciudades.forEach(c => {
-      html += `<button class="filtro-btn ${filtroActual===c?'active':''}" onclick="filtrar('${c}', this)">${c}</button>`;
-    });
-    f.innerHTML = html;
-  }
-
-  function filtrar(c, btn) {
-    filtroActual = c;
-    render();
-  }
-
-  // Carga inicial
-  window.onload = () => cargarDesdeSheets(false);
-</script>
-</body>
-</html>
+  const hoy = new Date();
+  const hoyStr = ("0" + hoy.
