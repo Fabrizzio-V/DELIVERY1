@@ -7,227 +7,48 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0d0f14;
-    --surface: #161a23;
-    --surface2: #1e2330;
-    --border: #2a3145;
-    --accent: #f0c040;
-    --accent2: #3b82f6;
-    --green: #22c55e;
-    --red: #ef4444;
-    --orange: #f97316;
-    --text: #e8ecf4;
-    --muted: #6b7a99;
-    --card-r: 16px;
+    --bg: #0d0f14; --surface: #161a23; --surface2: #1e2330; --border: #2a3145;
+    --accent: #f0c040; --accent2: #3b82f6; --green: #22c55e; --red: #ef4444;
+    --orange: #f97316; --text: #e8ecf4; --muted: #6b7a99; --card-r: 16px;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-    padding-bottom: 100px;
-  }
-
-  .header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 18px 20px 14px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .header-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
-  }
-  .header-btns { display: flex; gap: 8px; align-items: center; }
-  .btn-sync {
-    background: var(--surface2);
-    color: var(--accent2);
-    border: 1px solid rgba(59,130,246,0.3);
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 13px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    transition: all 0.15s;
-  }
-  .btn-sync:active { opacity: 0.7; }
-  .btn-sync.syncing { opacity: 0.6; pointer-events: none; }
-
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 20px;
-    font-size: 14px;
-    font-weight: 500;
-    z-index: 999;
-    transition: transform 0.3s ease;
-    white-space: nowrap;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); }
-  .toast.ok  { color: var(--green);  border-color: rgba(34,197,94,0.3); }
-  .toast.err { color: var(--red);    border-color: rgba(239,68,68,0.3); }
-  .toast.info{ color: var(--accent); border-color: rgba(240,192,64,0.3); }
-
-  .header h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: 20px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    color: var(--accent);
-  }
-  .header .fecha { font-size: 12px; color: var(--muted); font-weight: 300; }
-  .btn-add-top {
-    background: var(--accent);
-    color: #000;
-    border: none;
-    border-radius: 10px;
-    padding: 8px 14px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 13px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  .resumen {
-    padding: 16px 16px 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 14px;
-  }
-  .resumen-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--card-r);
-    padding: 14px;
-    position: relative;
-    overflow: hidden;
-  }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; padding-bottom: 100px; }
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 20px 14px; position: sticky; top: 0; z-index: 100; }
+  .header-top { display: flex; justify-content: space-between; align-items: center; }
+  .header-btns { display: flex; gap: 8px; }
+  .btn-sync { background: var(--surface2); color: var(--accent2); border: 1px solid rgba(59,130,246,0.3); border-radius: 10px; padding: 8px 12px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .btn-sync.syncing { opacity: 0.5; pointer-events: none; }
+  .btn-add-top { background: var(--accent); color: #000; border: none; border-radius: 10px; padding: 8px 14px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .resumen { padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .resumen-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-r); padding: 14px; position: relative; overflow: hidden; }
   .resumen-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
-  .resumen-card.total::before    { background: var(--accent); }
-  .resumen-card.entregado::before{ background: var(--green); }
-  .resumen-card.flete::before    { background: var(--accent2); }
-  .resumen-card.rendir::before   { background: var(--orange); }
-  .resumen-card .label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; font-weight:500; margin-bottom:6px; }
-  .resumen-card .monto { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; line-height:1; }
-  .resumen-card.total .monto    { color: var(--accent); }
-  .resumen-card.entregado .monto{ color: var(--green); }
-  .resumen-card.flete .monto    { color: var(--accent2); }
-  .resumen-card.rendir .monto   { color: var(--orange); }
-  .resumen-card .sub { font-size:11px; color:var(--muted); margin-top:4px; }
-
-  .filtros {
-    padding: 0 16px 14px;
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .filtros::-webkit-scrollbar { display: none; }
-  .filtro-btn {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--muted);
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-size: 12px;
-    font-family: 'DM Sans', sans-serif;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
+  .resumen-card.total::before { background: var(--accent); }
+  .resumen-card.entregado::before { background: var(--green); }
+  .resumen-card .label { font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:500; }
+  .resumen-card .monto { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; margin-top:5px; }
+  .filtros { padding: 0 16px 14px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  .filtro-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); border-radius: 20px; padding: 6px 14px; font-size: 12px; white-space: nowrap; cursor: pointer; }
   .filtro-btn.active { background:var(--accent); border-color:var(--accent); color:#000; font-weight:600; }
-
   .lista { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
-
-  .envio-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--card-r);
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-  .envio-card.entregado { border-left: 3px solid var(--green); }
-  .envio-card.cancelado { border-left: 3px solid var(--red); opacity: 0.7; }
-  .envio-card.pendiente { border-left: 3px solid var(--muted); }
-
-  .envio-header { padding:14px 14px 10px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
-  .envio-info { flex:1; min-width:0; }
-  .envio-nombre { font-family:'Syne',sans-serif; font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .envio-ciudad { font-size:12px; color:var(--muted); margin-top:2px; display:flex; align-items:center; gap:4px; }
-
-  .envio-montos { padding:0 14px 14px; display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; }
-  .monto-field { display:flex; flex-direction:column; gap:4px; }
-  .monto-field label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px; }
-  .monto-field input {
-    background:var(--surface2); border:1px solid var(--border); border-radius:8px;
-    color:var(--text); font-family:'Syne',sans-serif; font-weight:700; font-size:15px;
-    padding:7px 8px; width:100%; outline:none; transition:border-color 0.15s;
-  }
-  .monto-field input:focus { border-color: var(--accent); }
-  .monto-field .total-envio {
-    font-family:'Syne',sans-serif; font-weight:800; font-size:15px;
-    padding:7px 8px; background:var(--surface2); border-radius:8px;
-    color:var(--accent); border:1px solid var(--border);
-  }
-
-  .envio-actions { display:flex; border-top:1px solid var(--border); }
-  .action-btn {
-    flex:1; background:none; border:none; color:var(--muted); padding:10px;
-    font-size:12px; cursor:pointer; display:flex; align-items:center;
-    justify-content:center; gap:5px; transition:color 0.15s, background 0.15s;
-  }
-  .action-btn:not(:last-child) { border-right:1px solid var(--border); }
-  .action-btn:active { background: var(--surface2); }
-  .action-btn.del { color: var(--red); }
-
-  .estado-ciclo { display:flex; gap:6px; padding:0 14px 12px; }
-  .ciclo-btn {
-    flex:1; border:1px solid var(--border); border-radius:8px; padding:6px 4px;
-    font-size:11px; font-weight:600; cursor:pointer; text-align:center;
-    transition:all 0.15s; background:none; color:var(--muted);
-    font-family:'DM Sans',sans-serif;
-  }
-  .ciclo-btn.active-pendiente { background:var(--surface2); color:var(--text); border-color:var(--muted); }
-  .ciclo-btn.active-entregado { background:rgba(34,197,94,0.2); color:var(--green); border-color:var(--green); }
-  .ciclo-btn.active-cancelado { background:rgba(239,68,68,0.2); color:var(--red); border-color:var(--red); }
-
-  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; align-items:flex-end; justify-content:center; }
+  .envio-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-r); overflow: hidden; border-left: 4px solid var(--muted); }
+  .envio-card.entregado { border-left-color: var(--green); }
+  .envio-card.cancelado { border-left-color: var(--red); opacity: 0.8; }
+  .envio-header { padding: 14px; }
+  .envio-nombre { font-family:'Syne',sans-serif; font-weight:700; font-size:16px; }
+  .envio-ciudad { font-size:12px; color:var(--muted); }
+  .envio-montos { padding: 0 14px 14px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .monto-field label { font-size:9px; color:var(--muted); text-transform:uppercase; display:block; margin-bottom:2px; }
+  .monto-field input { background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); width:100%; padding:5px; font-weight:700; outline:none; }
+  .estado-ciclo { display: flex; gap: 5px; padding: 0 14px 10px; }
+  .ciclo-btn { flex:1; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-size: 12px; cursor: pointer; }
+  .ciclo-btn.active-entregado { background: var(--green); color: #000; font-weight: bold; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--surface2); border: 1px solid var(--accent); padding: 10px 20px; border-radius: 10px; font-size: 13px; z-index: 1000; display: none; }
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:200; align-items:flex-end; }
   .modal-overlay.open { display:flex; }
-  .modal { background:var(--surface); border-radius:20px 20px 0 0; padding:24px 20px 36px; width:100%; max-width:480px; border-top:1px solid var(--border); }
-  .modal h2 { font-family:'Syne',sans-serif; font-weight:800; font-size:20px; margin-bottom:20px; color:var(--accent); }
-  .field-group { display:flex; flex-direction:column; gap:14px; margin-bottom:20px; }
-  .field { display:flex; flex-direction:column; gap:6px; }
-  .field label { font-size:12px; color:var(--muted); font-weight:500; text-transform:uppercase; letter-spacing:0.6px; }
-  .field input { background:var(--surface2); border:1px solid var(--border); border-radius:10px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:16px; padding:12px 14px; outline:none; transition:border-color 0.15s; }
-  .field input:focus { border-color: var(--accent); }
-  .field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .btn-primary { width:100%; background:var(--accent); color:#000; border:none; border-radius:12px; padding:14px; font-family:'Syne',sans-serif; font-weight:800; font-size:16px; cursor:pointer; margin-bottom:10px; }
-  .btn-secondary { width:100%; background:none; color:var(--muted); border:1px solid var(--border); border-radius:12px; padding:12px; font-family:'DM Sans', sans-serif; font-size:14px; cursor:pointer; }
-
-  .empty { text-align:center; padding:48px 24px; color:var(--muted); }
-  .empty .icon { font-size:48px; margin-bottom:14px; }
-  .empty h3 { font-family:'Syne',sans-serif; font-size:18px; color:var(--text); margin-bottom:6px; }
+  .modal { background:var(--surface); width:100%; padding:20px; border-radius:20px 20px 0 0; }
+  .field { margin-bottom:15px; }
+  .field label { display:block; font-size:11px; color:var(--muted); margin-bottom:5px; }
+  .field input { width:100%; background:var(--surface2); border:1px solid var(--border); padding:12px; border-radius:10px; color:#fff; }
 </style>
 </head>
 <body>
@@ -235,348 +56,181 @@
 <div class="header">
   <div class="header-top">
     <div>
-      <h1>📦 MIS ENTREGAS</h1>
-      <div class="fecha" id="fechaHoy"></div>
+      <h1 id="titulo">MIS ENTREGAS</h1>
+      <div style="font-size: 11px; color: var(--muted);" id="fechaDisplay"></div>
     </div>
     <div class="header-btns">
-      <button class="btn-sync" id="btnSync" onclick="cargarDesdeSheets(true)">🔄 Sync</button>
-      <button class="btn-add-top" onclick="abrirModal()">+ Agregar</button>
+      <button class="btn-sync" id="btnSync" onclick="cargarDesdeSheets(true)">🔄 Actualizar</button>
+      <button class="btn-add-top" onclick="abrirModal()">+ Nuevo</button>
     </div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div id="toast" class="toast"></div>
 
 <div class="resumen">
   <div class="resumen-card total">
-    <div class="label">Total Vendido</div>
-    <div class="monto" id="totalVendido">₲ 0</div>
-    <div class="sub" id="totalEnvios">0 envíos</div>
+    <div class="label">Total Pedidos</div>
+    <div class="monto" id="resTotal">₲ 0</div>
   </div>
   <div class="resumen-card entregado">
-    <div class="label">Cobrado</div>
-    <div class="monto" id="totalCobrado">₲ 0</div>
-    <div class="sub" id="cantEntregados">0 entregados</div>
-  </div>
-  <div class="resumen-card flete">
-    <div class="label">Flete Total</div>
-    <div class="monto" id="totalFlete">₲ 0</div>
-    <div class="sub" id="cantFlete">de entregados</div>
-  </div>
-  <div class="resumen-card rendir">
-    <div class="label">A Rendir</div>
-    <div class="monto" id="totalRendir">₲ 0</div>
-    <div class="sub">cobrado - flete</div>
+    <div class="label">A Rendir (Neto)</div>
+    <div class="monto" id="resRendir">₲ 0</div>
   </div>
 </div>
 
-<div class="filtros" id="filtrosContainer">
+<div class="filtros" id="filtros">
   <button class="filtro-btn active" onclick="filtrar('todos', this)">Todos</button>
-  <button class="filtro-btn" onclick="filtrar('pendiente', this)">⏳ Pendiente</button>
-  <button class="filtro-btn" onclick="filtrar('entregado', this)">✅ Entregado</button>
-  <button class="filtro-btn" onclick="filtrar('cancelado', this)">❌ Cancelado</button>
 </div>
 
-<div id="listaEnvios" class="lista"></div>
+<div id="lista" class="lista"></div>
 
-<div class="modal-overlay" id="modalOverlay" onclick="cerrarModalClick(event)">
+<div class="modal-overlay" id="modalOverlay">
   <div class="modal">
-    <h2 id="modalTitulo">+ Nuevo Envío</h2>
-    <div class="field-group">
-      <div class="field">
-        <label>Nombre del Cliente</label>
-        <input type="text" id="inputNombre" placeholder="Ej: Juan Pérez" />
-      </div>
-      <div class="field">
-        <label>Ciudad / Barrio</label>
-        <input type="text" id="inputCiudad" placeholder="Ej: Luque, San Lorenzo..." />
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Monto del Pedido</label>
-          <input type="number" id="inputMonto" placeholder="0" />
-        </div>
-        <div class="field">
-          <label>Flete (lo que cobra él)</label>
-          <input type="number" id="inputFlete" placeholder="0" />
-        </div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Teléfono (opcional)</label>
-          <input type="text" id="inputTelefono" placeholder="09..." />
-        </div>
-        <div class="field">
-          <label>Nota (opcional)</label>
-          <input type="text" id="inputNota" placeholder="Ej: Portería..." />
-        </div>
-      </div>
+    <h2 style="margin-bottom:15px; font-family:'Syne'">Nuevo Envío</h2>
+    <div class="field"><label>Nombre Cliente</label><input type="text" id="inNombre"></div>
+    <div class="field"><label>Ciudad / Barrio</label><input type="text" id="inCiudad"></div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+      <div class="field"><label>Monto Pedido</label><input type="number" id="inMonto"></div>
+      <div class="field"><label>Flete</label><input type="number" id="inFlete"></div>
     </div>
-    <button class="btn-primary" onclick="guardarEnvio()">Guardar Envío</button>
-    <button class="btn-secondary" onclick="cerrarModal()">Cancelar</button>
+    <button style="width:100%; background:var(--accent); border:none; padding:15px; border-radius:10px; font-weight:800; margin-bottom:10px;" onclick="guardarNuevo()">Guardar en Planilla</button>
+    <button style="width:100%; background:none; border:1px solid var(--border); padding:10px; border-radius:10px; color:var(--muted)" onclick="cerrarModal()">Cancelar</button>
   </div>
 </div>
 
 <script>
-  // ─── CONFIGURACIÓN (URL ACTUALIZADA) ──────────────────────────────────────
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzb28P9iUtyshU61bTzA394fG984LiDcqflcwCuYbYtxT3JgJeDUW9xRITV1bFm_Vq2/exec';
+  // URL DE TU NUEVO SCRIPT
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxMx6BTv7X1gXz74i5IcIei6q551VskQ6V-P5ohKnxXmwo7wrps_PfKsnfTMOtpGnhp/exec';
   const SHEET_ID   = '1NLC-CqqtRxiC4FhPjgfNVaG3kPQZMAVY1-HTfitgo18';
-  const LS_KEY      = 'envios_dia';
+  
+  let envios = [];
+  let filtroActual = 'todos';
+  const hoyStr = new Date().toLocaleDateString('es-PY', { day:'2-digit', month:'2-digit', year:'numeric' });
+  document.getElementById('fechaDisplay').textContent = hoyStr;
 
-  // ─── ESTADO ───────────────────────────────────────────────────────────────
-  let envios        = [];
-  let filtroActivo = 'todos';
-  let editandoId   = null;
-  let syncTimeout  = null;
-
-  const hoyDate  = new Date();
-  const fechaHoy = String(hoyDate.getDate()).padStart(2,'0') + '/' +
-                   String(hoyDate.getMonth()+1).padStart(2,'0') + '/' +
-                   hoyDate.getFullYear();
-
-  document.getElementById('fechaHoy').textContent = hoyDate.toLocaleDateString('es-PY', {
-    weekday:'long', day:'numeric', month:'long'
-  });
-
-  // ─── HELPERS ──────────────────────────────────────────────────────────────
-  function formatGs(n) {
-    return '₲ ' + (Number(n) || 0).toLocaleString('es-PY');
-  }
-
-  function mostrarToast(msg, tipo = 'ok', duracion = 3000) {
+  function mostrarToast(txt) {
     const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'toast ' + tipo + ' show';
-    clearTimeout(t._timer);
-    t._timer = setTimeout(() => t.classList.remove('show'), duracion);
+    t.textContent = txt; t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3000);
   }
 
-  function guardarLocal() {
-    localStorage.setItem(LS_KEY, JSON.stringify(envios));
-  }
-
-  function cargarLocal() {
-    try { 
-        const datos = localStorage.getItem(LS_KEY);
-        return datos ? JSON.parse(datos) : []; 
-    } catch(e) { return []; }
-  }
-
-  // ─── SHEETS: GUARDAR (SOPORTE PARA CELULARES) ─────────────────────────────
-  function guardarEnSheets() {
-    guardarLocal(); 
-    clearTimeout(syncTimeout);
-    
-    syncTimeout = setTimeout(() => {
-      // Usamos una técnica de "callback" invisible para evitar errores de red en celular
-      const payload = encodeURIComponent(JSON.stringify(envios));
-      const finalUrl = `${SCRIPT_URL}?action=guardar_dia&sheetId=${SHEET_ID}&fecha=${fechaHoy}&envios=${payload}`;
-
-      // En móviles, fetch con GET es el método más estable
-      fetch(finalUrl, { method: 'GET', mode: 'no-cors' })
-      .then(() => {
-        mostrarToast('☁️ Sincronizado', 'ok', 2000);
-      })
-      .catch(err => {
-        console.warn("Guardado localmente, error en red.");
-      });
-    }, 1500);
-  }
-
-  // ─── SHEETS: CARGAR ───────────────────────────────────────────────────────
-  async function cargarDesdeSheets(mostrarFeedback = false) {
+  // --- SINCRONIZACIÓN REAL CON ANTI-CACHÉ ---
+  async function cargarDesdeSheets(feedback = false) {
     const btn = document.getElementById('btnSync');
     btn.classList.add('syncing');
-    btn.textContent = '⏳...';
-    
     try {
-      const res = await fetch(`${SCRIPT_URL}?sheetId=${SHEET_ID}&t=${Date.now()}`);
-      const data = await res.json();
-      
-      if (data.ok && Array.isArray(data.data)) {
-        // Solo sobrescribimos localmente si la nube tiene datos de hoy
-        if (data.data.length > 0) {
-          envios = data.data;
-          guardarLocal();
-          renderLista();
-          actualizarResumen();
-          actualizarFiltrosCiudad();
-          if (mostrarFeedback) mostrarToast('✅ Datos de nube cargados', 'ok');
-        }
+      // El "nocache" obliga a Google a darte los datos más nuevos del Excel
+      const resp = await fetch(`${SCRIPT_URL}?sheetId=${SHEET_ID}&nocache=${Date.now()}`);
+      const res = await resp.json();
+      if (res.ok) {
+        envios = res.data;
+        render();
+        if (feedback) mostrarToast("✅ Datos actualizados");
       }
-    } catch(err) {
-      if (mostrarFeedback) mostrarToast('⚠️ Usando datos del celular', 'info');
+    } catch(e) {
+      mostrarToast("❌ Error de conexión");
+    } finally {
+      btn.classList.remove('syncing');
     }
+  }
+
+  async function enviarASheets() {
+    const payload = encodeURIComponent(JSON.stringify(envios));
+    const url = `${SCRIPT_URL}?action=guardar_dia&sheetId=${SHEET_ID}&fecha=${hoyStr}&envios=${payload}&t=${Date.now()}`;
     
-    btn.classList.remove('syncing');
-    btn.textContent = '🔄 Sync';
+    // Usamos mode no-cors para celulares
+    fetch(url, { method: 'GET', mode: 'no-cors' });
+    mostrarToast("☁️ Sincronizando...");
   }
 
-  // ─── MODAL ────────────────────────────────────────────────────────────────
-  function abrirModal(id = null) {
-    editandoId = id;
-    if (id !== null) {
-      const e = envios.find(x => x.id === id);
-      document.getElementById('modalTitulo').textContent   = '✏️ Editar Envío';
-      document.getElementById('inputNombre').value   = e.nombre;
-      document.getElementById('inputCiudad').value   = e.ciudad;
-      document.getElementById('inputMonto').value    = e.montoBase;
-      document.getElementById('inputFlete').value    = e.flete || 0;
-      document.getElementById('inputTelefono').value = e.telefono || '';
-      document.getElementById('inputNota').value      = e.nota || '';
-    } else {
-      document.getElementById('modalTitulo').textContent = '+ Nuevo Envío';
-      ['inputNombre','inputCiudad','inputMonto','inputFlete','inputTelefono','inputNota']
-        .forEach(id => document.getElementById(id).value = '');
-    }
-    document.getElementById('modalOverlay').classList.add('open');
-  }
+  function render() {
+    const container = document.getElementById('lista');
+    const filtrados = filtroActual === 'todos' ? envios : envios.filter(e => e.ciudad === filtroActual);
+    
+    let totalVendido = 0;
+    let totalRendir = 0;
 
-  function cerrarModal() {
-    document.getElementById('modalOverlay').classList.remove('open');
-    editandoId = null;
-  }
+    container.innerHTML = filtrados.map(e => {
+      totalVendido += (e.montoBase + (e.extras || 0));
+      if (e.estado === 'entregado') {
+        totalRendir += (e.montoBase + (e.extras || 0) - e.flete);
+      }
 
-  function cerrarModalClick(e) {
-    if (e.target === document.getElementById('modalOverlay')) cerrarModal();
-  }
-
-  function guardarEnvio() {
-    const nombre   = document.getElementById('inputNombre').value.trim();
-    const ciudad   = document.getElementById('inputCiudad').value.trim();
-    const monto    = parseFloat(document.getElementById('inputMonto').value) || 0;
-    const flete    = parseFloat(document.getElementById('inputFlete').value) || 0;
-    const telefono = document.getElementById('inputTelefono').value.trim();
-    const nota     = document.getElementById('inputNota').value.trim();
-
-    if (!nombre || !ciudad) { alert('Completar Nombre y Ciudad'); return; }
-
-    if (editandoId !== null) {
-      const idx = envios.findIndex(x => x.id === editandoId);
-      Object.assign(envios[idx], { nombre, ciudad, montoBase:monto, flete, telefono, nota });
-    } else {
-      envios.push({ id:Date.now(), nombre, ciudad, telefono, nota, montoBase:monto, flete, extras:0, estado:'pendiente' });
-    }
-
-    cerrarModal();
-    renderLista();
-    actualizarResumen();
-    actualizarFiltrosCiudad();
-    guardarEnSheets();
-  }
-
-  function setEstado(id, estado) {
-    const e = envios.find(x => x.id === id);
-    if (!e) return;
-    e.estado = estado;
-    renderLista();
-    actualizarResumen();
-    guardarEnSheets();
-  }
-
-  function actualizarMonto(id, campo, valor) {
-    const e = envios.find(x => x.id === id);
-    if (!e) return;
-    e[campo] = parseFloat(valor) || 0;
-    const totalEl = document.getElementById('total-' + id);
-    if (totalEl) totalEl.textContent = formatGs(e.montoBase + (e.extras || 0));
-    actualizarResumen();
-    guardarEnSheets();
-  }
-
-  function eliminarEnvio(id) {
-    if (!confirm('¿Eliminar envío?')) return;
-    envios = envios.filter(x => x.id !== id);
-    renderLista();
-    actualizarResumen();
-    actualizarFiltrosCiudad();
-    guardarEnSheets();
-  }
-
-  function filtrar(f, btn) {
-    filtroActivo = f;
-    document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    renderLista();
-  }
-
-  function actualizarResumen() {
-    const entregados   = envios.filter(e => e.estado === 'entregado');
-    const totalCobrado = entregados.reduce((s,e) => s + e.montoBase + (e.extras||0), 0);
-    const fleteTotal   = entregados.reduce((s,e) => s + (e.flete||0), 0);
-    const totalGeneral = envios.reduce((s,e) => s + e.montoBase + (e.extras||0), 0);
-
-    document.getElementById('totalVendido').textContent  = formatGs(totalGeneral);
-    document.getElementById('totalEnvios').textContent   = envios.length + ' envíos';
-    document.getElementById('totalCobrado').textContent    = formatGs(totalCobrado);
-    document.getElementById('cantEntregados').textContent  = entregados.length + ' entregados';
-    document.getElementById('totalFlete').textContent      = formatGs(fleteTotal);
-    document.getElementById('cantFlete').textContent       = 'de ' + entregados.length;
-    document.getElementById('totalRendir').textContent     = formatGs(totalCobrado - fleteTotal);
-  }
-
-  function renderLista() {
-    const container = document.getElementById('listaEnvios');
-    let lista = filtroActivo === 'todos' ? envios :
-                filtroActivo.startsWith('ciudad:') ? envios.filter(e => e.ciudad === filtroActivo.split(':')[1]) :
-                envios.filter(e => e.estado === filtroActivo);
-
-    if (lista.length === 0) {
-      container.innerHTML = `<div class="empty"><h3>No hay envíos</h3></div>`;
-      return;
-    }
-
-    const orden = { pendiente:0, entregado:1, cancelado:2 };
-    lista = [...lista].sort((a,b) => orden[a.estado] - orden[b.estado]);
-
-    container.innerHTML = lista.map(e => {
-      const total = e.montoBase + (e.extras || 0);
       return `
-      <div class="envio-card ${e.estado}">
-        <div class="envio-header">
-          <div class="envio-info">
+        <div class="envio-card ${e.estado}">
+          <div class="envio-header">
             <div class="envio-nombre">${e.nombre}</div>
-            <div class="envio-ciudad">📍 ${e.ciudad} ${e.nota ? `<span style="color:var(--accent)">· ${e.nota}</span>` : ''}</div>
+            <div class="envio-ciudad">📍 ${e.ciudad} ${e.nota ? ' | '+e.nota : ''}</div>
+          </div>
+          <div class="estado-ciclo">
+            <button class="ciclo-btn ${e.estado==='pendiente'?'active-entregado':''}" onclick="cambiarEstado(${e.id},'pendiente')">⏳</button>
+            <button class="ciclo-btn ${e.estado==='entregado'?'active-entregado':''}" onclick="cambiarEstado(${e.id},'entregado')">✅</button>
+            <button class="ciclo-btn ${e.estado==='cancelado'?'active-entregado':''}" onclick="cambiarEstado(${e.id},'cancelado')">❌</button>
+          </div>
+          <div class="envio-montos">
+            <div class="monto-field"><label>Pedido</label><input type="number" value="${e.montoBase}" onchange="edit(${e.id},'montoBase',this.value)"></div>
+            <div class="monto-field"><label>Flete</label><input type="number" value="${e.flete}" onchange="edit(${e.id},'flete',this.value)"></div>
+            <div class="monto-field"><label>Total</label><div style="font-weight:800; font-size:14px">₲ ${(e.montoBase + (e.extras||0)).toLocaleString('es-PY')}</div></div>
           </div>
         </div>
-        <div class="estado-ciclo">
-          <button class="ciclo-btn ${e.estado==='pendiente'?'active-pendiente':''}" onclick="setEstado(${e.id},'pendiente')">⏳</button>
-          <button class="ciclo-btn ${e.estado==='entregado'?'active-entregado':''}" onclick="setEstado(${e.id},'entregado')">✅</button>
-          <button class="ciclo-btn ${e.estado==='cancelado'?'active-cancelado':''}" onclick="setEstado(${e.id},'cancelado')">❌</button>
-        </div>
-        <div class="envio-montos">
-          <div class="monto-field"><label>Pedido</label><input type="number" value="${e.montoBase}" onchange="actualizarMonto(${e.id},'montoBase',this.value)"></div>
-          <div class="monto-field"><label>Extras</label><input type="number" value="${e.extras||0}" onchange="actualizarMonto(${e.id},'extras',this.value)"></div>
-          <div class="monto-field"><label>Flete</label><input type="number" value="${e.flete||0}" onchange="actualizarMonto(${e.id},'flete',this.value)"></div>
-          <div class="monto-field"><label>Total</label><div class="total-envio" id="total-${e.id}">${formatGs(total)}</div></div>
-        </div>
-        <div class="envio-actions">
-          <button class="action-btn" onclick="abrirModal(${e.id})">✏️</button>
-          <button class="action-btn del" onclick="eliminarEnvio(${e.id})">🗑</button>
-        </div>
-      </div>`;
+      `;
     }).join('');
+
+    document.getElementById('resTotal').textContent = '₲ ' + totalVendido.toLocaleString('es-PY');
+    document.getElementById('resRendir').textContent = '₲ ' + totalRendir.toLocaleString('es-PY');
+    actualizarFiltros();
   }
 
-  function actualizarFiltrosCiudad() {
-    const ciudades = [...new Set(envios.map(e => e.ciudad).filter(Boolean))];
-    const cont = document.getElementById('filtrosContainer');
-    cont.querySelectorAll('.filtro-ciudad').forEach(b => b.remove());
+  function cambiarEstado(id, estado) {
+    const e = envios.find(x => x.id === id);
+    e.estado = estado;
+    render();
+    enviarASheets();
+  }
+
+  function edit(id, campo, valor) {
+    const e = envios.find(x => x.id === id);
+    e[campo] = parseFloat(valor) || 0;
+    render();
+    enviarASheets();
+  }
+
+  function abrirModal() { document.getElementById('modalOverlay').classList.add('open'); }
+  function cerrarModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+  function guardarNuevo() {
+    const n = {
+      id: Date.now(),
+      nombre: document.getElementById('inNombre').value,
+      ciudad: document.getElementById('inCiudad').value,
+      montoBase: parseFloat(document.getElementById('inMonto').value) || 0,
+      flete: parseFloat(document.getElementById('inFlete').value) || 0,
+      extras: 0,
+      estado: 'pendiente'
+    };
+    envios.push(n);
+    cerrarModal();
+    render();
+    enviarASheets();
+  }
+
+  function actualizarFiltros() {
+    const ciudades = [...new Set(envios.map(e => e.ciudad))];
+    const f = document.getElementById('filtros');
+    f.innerHTML = `<button class="filtro-btn ${filtroActual==='todos'?'active':''}" onclick="filtrar('todos', this)">Todos</button>`;
     ciudades.forEach(c => {
-      const btn = document.createElement('button');
-      btn.className = 'filtro-btn filtro-ciudad';
-      btn.textContent = '📍 ' + c;
-      btn.onclick = function() { filtrar('ciudad:' + c, btn); };
-      cont.appendChild(btn);
+      f.innerHTML += `<button class="filtro-btn ${filtroActual===c?'active':''}" onclick="filtrar('${c}', this)">${c}</button>`;
     });
   }
 
-  // Inicio inmediato con datos locales, luego intenta sincronizar
-  envios = cargarLocal();
-  renderLista();
-  actualizarResumen();
-  actualizarFiltrosCiudad();
-  cargarDesdeSheets(false);
+  function filtrar(c, btn) {
+    filtroActual = c;
+    render();
+  }
+
+  // Cargar al iniciar
+  cargarDesdeSheets();
 </script>
 </body>
 </html>
